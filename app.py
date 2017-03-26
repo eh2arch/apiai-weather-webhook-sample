@@ -8,12 +8,15 @@ from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
+import __init__
 import json
 import os
 
 from flask import Flask
 from flask import request
 from flask import make_response
+# from app import app, global_subj_list
+
 
 # Flask app should start in global layout
 app = Flask(__name__)
@@ -34,29 +37,46 @@ def webhook():
     r.headers['Content-Type'] = 'application/json'
     return r
 
-
 def processRequest(req):
-    if req.get("result").get("action") != "yahooWeatherForecast":
-        return {}
-    baseurl = "https://query.yahooapis.com/v1/public/yql?"
-    yql_query = makeYqlQuery(req)
-    if yql_query is None:
-        return {}
-    yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-    result = urlopen(yql_url).read()
-    data = json.loads(result)
-    res = makeWebhookResult(data)
-    return res
+    # if req.get("result").get("action") != "yahooWeatherForecast":
+    #     return {}
+    scode = req.get("parameters").get("scode")
+    speech = "Blah " + global_subj_list[scode]['title']
+    return {
+        "speech": speech,
+        "displayText": speech,
+        # "data": data,
+        # "contextOut": [],
+        "source": "apiai-weather-webhook-sample"
+    }
+
+    # data = json.loads(result)
+    # res = makeWebhookResult(data)
+    # return res
 
 
-def makeYqlQuery(req):
-    result = req.get("result")
-    parameters = result.get("parameters")
-    city = parameters.get("geo-city")
-    if city is None:
-        return None
+# def processRequest(req):
+#     if req.get("result").get("action") != "yahooWeatherForecast":
+#         return {}
+#     baseurl = "https://query.yahooapis.com/v1/public/yql?"
+#     yql_query = makeYqlQuery(req)
+#     if yql_query is None:
+#         return {}
+#     yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
+#     result = urlopen(yql_url).read()
+#     data = json.loads(result)
+#     res = makeWebhookResult(data)
+#     return res
 
-    return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
+
+# def makeYqlQuery(req):
+#     result = req.get("result")
+#     parameters = result.get("parameters")
+#     city = parameters.get("geo-city")
+#     if city is None:
+#         return None
+
+#     return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
 
 
 def makeWebhookResult(data):
